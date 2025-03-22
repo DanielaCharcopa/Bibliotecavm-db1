@@ -12,26 +12,28 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE procSelectAuthors() 
 BEGIN 
-Select au_nombre, au_apellido, au_municipio
+Select au_id, au_nombre, au_apellido, au_municipio
 FROM tbl_autores; 
 END //
 
-DELIMITER ;
+
 
 -- Actualizar
 DELIMITER // 
-CREATE PROCEDURE procUpdateAuthor( IN v_au_nombre varchar(15), IN v_au_apellido varchar(15), IN v_au_municipio varchar(25)) 
+CREATE PROCEDURE procUpdateAuthor( 
+IN v_au_id INT,
+IN v_au_nombre varchar(15), IN v_au_apellido varchar(15), IN v_au_municipio varchar(25)) 
 BEGIN UPDATE tbl_autores
 SET  au_nombre = v_au_nombre, au_apellido = v_au_apellido, au_municipio = v_au_municipio 
- WHERE autor_id = v_id;
+ WHERE au_id = v_au_id;
  END //
 DELIMITER ;
 
--- Eliminar
+
 DELIMITER // 
 CREATE PROCEDURE procDeleteAuthors( IN v_au_id INT) 
 BEGIN  DELETE FROM tbl_autores
- WHERE autor_id = v_id;
+ WHERE au_id = v_au_id;
  END //
 DELIMITER ;
 
