@@ -14,6 +14,14 @@ begin
 select cat_id,cat_nombre,cat_descripcion from tbl_categorias;
 end//
 DELIMITER ;
+-- Mostrar DDL (ID y Nombre)
+DELIMITER //
+CREATE PROCEDURE procSelectCategoryDDL()
+BEGIN
+    SELECT cat_id, cat_nombre 
+    FROM tbl_categorias;
+END//
+DELIMITER ;
 
 -- Actualizar
 DELIMITER // 
