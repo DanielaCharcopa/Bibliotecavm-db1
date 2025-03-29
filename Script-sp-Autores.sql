@@ -36,17 +36,3 @@ BEGIN  DELETE FROM tbl_autores
  WHERE au_id = v_au_id;
  END //
 DELIMITER ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
