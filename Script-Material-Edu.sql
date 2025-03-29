@@ -21,7 +21,7 @@ BEGIN
         mat_keywords, 
         mat_formato, 
         tbl_editorial_edi_id,
-        tbl_categorias_cat_id  -- Nueva columna
+        tbl_categorias_cat_id  
     ) 
     VALUES (
         titulo, 
@@ -31,7 +31,7 @@ BEGIN
         keywords, 
         formato, 
         editorial_id,
-        categoria_id  -- Nuevo valor
+        categoria_id  
     );
 END //
 DELIMITER ;
@@ -69,7 +69,7 @@ CREATE PROCEDURE proUpdateMaterialEducativo (
     IN keywords TEXT,
     IN formato ENUM('PDF', 'Epub', 'Video', 'Audio', 'Otro'), 
     IN editorial_id INT,
-    IN categoria_id INT  -- Nuevo parámetro para la categoría
+    IN categoria_id INT  
 )
 BEGIN
     UPDATE tbl_material_edu 

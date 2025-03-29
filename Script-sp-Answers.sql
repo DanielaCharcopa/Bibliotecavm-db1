@@ -1,24 +1,38 @@
 -- Insertar una nueva respuesta
 DELIMITER //
 CREATE PROCEDURE procInsertAnswer(
-    IN v_res_respuesta TEXT,          -- Respuesta (texto libre)
-    IN v_en_id INT,                   -- ID de la encuesta
-    IN v_usu_id INT                   -- ID del usuario que responde
+    IN v_res_respuesta ENUM('Sí', 'No'),  -- Respuesta (Sí o No)
+    IN v_en_id INT,                       -- ID de la encuesta
+    IN v_usu_id INT                       -- ID del usuario que responde
 )
 BEGIN
-    -- Inserta la respuesta
-    INSERT INTO tbl_respuestas (
-        res_respuesta, 
-        tbl_encuesta_en_id,
-        tbl_encuesta_tbl_usuarios_usu_id
-    ) 
-    VALUES (
-        v_res_respuesta, 
-        v_en_id,
-        v_usu_id
-    );
+    -- Verificar si el usuario ya ha respondido esta encuesta
+    DECLARE respuesta_existente INT;
+    SELECT COUNT(*) INTO respuesta_existente
+    FROM tbl_respuestas
+    WHERE tbl_encuesta_en_id = v_en_id
+      AND tbl_usuarios_usu_id = v_usu_id;
+
+    -- Si no existe una respuesta previa, se inserta la nueva respuesta
+    IF respuesta_existente = 0 THEN
+        INSERT INTO tbl_respuestas (
+            res_respuesta, 
+            tbl_usuarios_usu_id,
+            tbl_encuesta_en_id
+        ) 
+        VALUES (
+            v_res_respuesta, 
+            v_usu_id,
+            v_en_id
+        );
+    ELSE
+        -- Si ya existe, se lanza un error
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El usuario ya ha respondido esta encuesta.';
+    END IF;
 END//
 DELIMITER ;
+
 
 -- Mostrar todas las respuestas
 DELIMITER //
@@ -28,11 +42,11 @@ BEGIN
         r.res_id,                      -- ID de la respuesta
         r.tbl_encuesta_en_id,          -- ID de la encuesta
         e.en_descripcion_pregunta,     -- Pregunta de la encuesta
-        r.res_respuesta,               -- Respuesta (texto libre)
+        r.res_respuesta,               -- Respuesta (Sí o No)
         CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS nombre_usuario  -- Nombre completo del usuario
     FROM tbl_respuestas r
     INNER JOIN tbl_encuesta e ON r.tbl_encuesta_en_id = e.en_id 
-    INNER JOIN tbl_usuarios u ON r.tbl_encuesta_tbl_usuarios_usu_id = u.usu_id
+    INNER JOIN tbl_usuarios u ON r.tbl_usuarios_usu_id = u.usu_id
     ORDER BY e.en_descripcion_pregunta, r.res_id ASC;
 END//
 DELIMITER ;
@@ -43,7 +57,7 @@ CREATE PROCEDURE procUpdateAnswer(
     IN v_res_id INT,                  -- ID de la respuesta
     IN v_en_id INT,                   -- ID de la encuesta
     IN v_usu_id INT,                  -- ID del usuario relacionado
-    IN v_res_respuesta TEXT           -- Nueva respuesta (texto libre)
+    IN v_res_respuesta ENUM('Sí', 'No')  -- Nueva respuesta (Sí o No)
 )
 BEGIN
     -- Verifica si la respuesta existe antes de actualizar
@@ -52,7 +66,7 @@ BEGIN
         FROM tbl_respuestas 
         WHERE res_id = v_res_id 
           AND tbl_encuesta_en_id = v_en_id
-          AND tbl_encuesta_tbl_usuarios_usu_id = v_usu_id
+          AND tbl_usuarios_usu_id = v_usu_id
     ) THEN
         -- Actualiza la respuesta
         UPDATE tbl_respuestas 
@@ -60,7 +74,7 @@ BEGIN
             res_respuesta = v_res_respuesta
         WHERE res_id = v_res_id 
           AND tbl_encuesta_en_id = v_en_id
-          AND tbl_encuesta_tbl_usuarios_usu_id = v_usu_id;
+          AND tbl_usuarios_usu_id = v_usu_id;
     ELSE
         -- Si no existe, lanza un error
         SIGNAL SQLSTATE '45000'
@@ -68,7 +82,6 @@ BEGIN
     END IF;
 END//
 DELIMITER ;
-
 
 -- Eliminar una respuesta
 DELIMITER //
@@ -82,6 +95,47 @@ BEGIN
     DELETE FROM tbl_respuestas 
     WHERE res_id = v_res_id 
       AND tbl_encuesta_en_id = v_en_id
-      AND tbl_encuesta_tbl_usuarios_usu_id = v_usu_id;
+      AND tbl_usuarios_usu_id = v_usu_id;
+END//
+DELIMITER ;
+
+-- ID del usuario del cual se desean obtener las respuestas
+DELIMITER //
+CREATE PROCEDURE procSelectAnswerByUser(
+    IN p_user_id INT  -- ID del usuario
+)
+BEGIN
+    -- Selecciona las respuestas dadas por el usuario
+    SELECT 
+        r.res_id,                      -- ID de la respuesta
+        r.tbl_encuesta_en_id,          -- ID de la encuesta
+        e.en_descripcion_pregunta,     -- Pregunta de la encuesta
+        r.res_respuesta,               -- Respuesta (Sí o No)
+        CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS nombre_usuario  -- Nombre completo del usuario
+    FROM tbl_respuestas r
+    INNER JOIN tbl_encuesta e ON r.tbl_encuesta_en_id = e.en_id
+    INNER JOIN tbl_usuarios u ON r.tbl_usuarios_usu_id = u.usu_id
+    WHERE r.tbl_usuarios_usu_id = p_user_id
+    ORDER BY e.en_descripcion_pregunta, r.res_id ASC;
+END//
+DELIMITER ;
+
+-- ID del usuario del cual se desean obtener las preguntas no respondidas.
+DELIMITER //
+CREATE PROCEDURE procGetUnansweredQuestionsByUser(
+    IN v_usu_id INT  -- ID del usuario
+)
+BEGIN
+    -- Selecciona las preguntas no respondidas por el usuario
+    SELECT 
+        e.en_id,                      -- ID de la encuesta
+        e.en_descripcion_pregunta     -- Pregunta de la encuesta
+    FROM tbl_encuesta e
+    WHERE e.en_id NOT IN (
+        SELECT r.tbl_encuesta_en_id 
+        FROM tbl_respuestas r
+        WHERE r.tbl_usuarios_usu_id = v_usu_id
+    )
+    ORDER BY e.en_descripcion_pregunta ASC;
 END//
 DELIMITER ;

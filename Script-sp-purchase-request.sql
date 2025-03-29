@@ -27,7 +27,7 @@ BEGIN
         tbl_usuarios_usu_id,
         solic_cantidad,
         tbl_material_edu_mat_id,
-        solic_valor_total  -- Nueva columna
+        solic_valor_total 
     )
     VALUES(
         v_solic_ticket, 
@@ -35,11 +35,10 @@ BEGIN
         v_tbl_usuarios_usu_id,
         v_solic_cantidad,
         v_tbl_material_edu_mat_id,
-        v_valor_total  -- Nuevo valor
+        v_valor_total  
     );
 END//
 DELIMITER ;
-
 
 -- Mostrar todas las solicitudes de compra
 DELIMITER //
@@ -52,7 +51,8 @@ BEGIN
         CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS usuario_nombre,
         sc.solic_cantidad,
         m.mat_titulo AS material_titulo,
-        sc.solic_valor_total  -- Nueva columna
+        m.mat_precio AS precio_unitario, 
+        sc.solic_valor_total  
     FROM 
         tbl_solicitud_compra sc
     INNER JOIN 
@@ -133,7 +133,7 @@ DELIMITER //
 CREATE PROCEDURE procSelectPurchaseRequestsByUser(
     IN v_user_id INT
 )
-BEGIN
+BEGIN  
     SELECT 
         sc.solic_id,
         sc.solic_ticket,
@@ -152,3 +152,15 @@ BEGIN
         sc.tbl_usuarios_usu_id = v_user_id;
 END//
 DELIMITER ;
+
+    -- Seleccionar el ID y el título de los materiales educativos
+DELIMITER //
+CREATE PROCEDURE procGetMaterials()
+BEGIN
+    SELECT mat_id, mat_titulo, mat_precio
+    FROM tbl_material_edu;
+END //
+DELIMITER ;
+
+
+

@@ -3,7 +3,6 @@ DELIMITER //
 CREATE PROCEDURE procInsertVisits(
     IN v_fecha_ingreso DATE, 
     IN v_duracion TIME, 
-    IN v_dispositivo ENUM('Computadora', 'Móvil', 'Tableta', 'Otro'),
     IN v_usu_id INT,
     IN v_mat_id INT
 )
@@ -11,14 +10,12 @@ BEGIN
     INSERT INTO tbl_visitas(
         vis_fecha_ingreso, 
         vis_duracion, 
-        vis_dispositivo, 
         tbl_usuarios_usu_id,
         tbl_material_edu_mat_id
     )
     VALUES (
         v_fecha_ingreso, 
         v_duracion, 
-        v_dispositivo, 
         v_usu_id,
         v_mat_id
     ); 
@@ -33,7 +30,6 @@ BEGIN
         v.vis_id, 
         v.vis_fecha_ingreso, 
         v.vis_duracion, 
-        v.vis_dispositivo,
         CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS usuario_nombre,
         m.mat_titulo AS material_titulo
     FROM tbl_visitas v
@@ -48,7 +44,6 @@ CREATE PROCEDURE procUpdateVisits(
     IN v_vis_id INT,  
     IN v_fecha_ingreso DATE, 
     IN v_duracion TIME, 
-    IN v_dispositivo ENUM('Computadora', 'Móvil', 'Tableta', 'Otro'),
     IN v_usu_id INT,
     IN v_mat_id INT
 ) 
@@ -57,7 +52,6 @@ BEGIN
     SET  
         vis_fecha_ingreso = v_fecha_ingreso, 
         vis_duracion = v_duracion,
-        vis_dispositivo = v_dispositivo,
         tbl_usuarios_usu_id = v_usu_id,
         tbl_material_edu_mat_id = v_mat_id
     WHERE vis_id = v_vis_id;
@@ -148,21 +142,56 @@ DELIMITER ;
 
 -- Visitas por usuario logueado
 DELIMITER //
-CREATE PROCEDURE procSelectVisitsByUser(
-    IN v_user_id INT
-)
+CREATE PROCEDURE procSelectVisitsByUser(IN v_user_id INT)
 BEGIN
     SELECT 
-        v.vis_id,
-        v.vis_fecha_ingreso,
-        v.vis_duracion,
-        v.vis_dispositivo,
-        CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS usuario_nombre,
-        m.mat_titulo AS material_titulo
+        v.vis_id, 
+        v.vis_fecha_ingreso, 
+        v.vis_duracion, 
+        m.mat_titulo AS mat_titulo
     FROM tbl_visitas v
-    INNER JOIN tbl_usuarios u ON v.tbl_usuarios_usu_id = u.usu_id
     INNER JOIN tbl_material_edu m ON v.tbl_material_edu_mat_id = m.mat_id
     WHERE v.tbl_usuarios_usu_id = v_user_id;
-END//
+END //
 DELIMITER ;
 
+--  Crear el procedimiento almacenado para listar materiales educativos
+DELIMITER //
+CREATE PROCEDURE procListarMaterialesEducativos()
+BEGIN
+    SELECT 
+        mat_id AS id,
+        mat_titulo AS titulo
+    FROM tbl_material_edu;
+END //
+DELIMITER ;
+
+--  Actualizar la duración de la visita, para ver el tiempo de visita.
+
+DELIMITER //
+CREATE PROCEDURE procActualizarDuracionVisita(
+    IN v_visita_id INT,
+    IN v_duracion TIME
+)
+BEGIN
+    UPDATE tbl_visitas
+    SET vis_duracion = v_duracion
+    WHERE vis_id = v_visita_id;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE procObtenerUltimaVisitaId(
+    IN v_usu_id INT,
+    IN v_mat_id INT
+)
+BEGIN
+    SELECT vis_id
+    FROM tbl_visitas
+    WHERE tbl_usuarios_usu_id = v_usu_id
+      AND tbl_material_edu_mat_id = v_mat_id
+    ORDER BY vis_fecha_ingreso DESC
+    LIMIT 1;
+END //
+DELIMITER ;
