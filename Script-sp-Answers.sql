@@ -137,5 +137,25 @@ BEGIN
         WHERE r.tbl_usuarios_usu_id = v_usu_id
     )
     ORDER BY e.en_descripcion_pregunta ASC;
+
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE procSelectUnansweredQuestionsByUser(IN v_usu_id INT)
+BEGIN
+    -- Retorna preguntas no respondidas o un mensaje si no hay
+    IF EXISTS (SELECT 1 FROM tbl_encuesta) THEN
+        SELECT 
+            e.en_id, 
+            e.en_descripcion_pregunta
+        FROM tbl_encuesta e
+        LEFT JOIN tbl_respuestas r 
+            ON e.en_id = r.tbl_encuesta_en_id AND r.tbl_usuarios_usu_id = v_usu_id
+        WHERE r.res_id IS NULL;
+    ELSE
+        -- Retorna una fila con valores nulos si no hay preguntas
+        SELECT NULL AS en_id, 'No hay preguntas en el sistema' AS en_descripcion_pregunta;
+    END IF;
 END//
 DELIMITER ;
