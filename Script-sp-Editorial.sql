@@ -15,6 +15,15 @@ select edi_nombre, edi_ciudad, edi_telefono, edi_correo from tbl_editorial;
 end//
 DELIMITER ;
 
+-- Mostrar DDL (ID y Nombre Editorial)
+DELIMITER //
+CREATE PROCEDURE procSelectEditorialDDL()
+BEGIN
+    SELECT edi_id, edi_nombre  
+    FROM tbl_editorial;
+END//
+DELIMITER ;
+
 -- Actualizar
 DELIMITER // 
 CREATE PROCEDURE procUpdateEditorial(

@@ -31,6 +31,7 @@ BEGIN
         v.vis_fecha_ingreso, 
         v.vis_duracion, 
         CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS usuario_nombre,
+        u.usu_correo AS usuario_correo,
         m.mat_titulo AS material_titulo
     FROM tbl_visitas v
     INNER JOIN tbl_usuarios u ON v.tbl_usuarios_usu_id = u.usu_id
@@ -168,6 +169,68 @@ DELIMITER ;
 
 --  Actualizar la duración de la visita, para ver el tiempo de visita.
 
+DELIMITER ;
+
+--  Crear el procedimiento almacenado para listar materiales educativos
+DELIMITER //
+CREATE PROCEDURE procListarMaterialesEducativos()
+BEGIN
+    SELECT 
+        mat_id AS id,
+        mat_titulo AS titulo
+    FROM tbl_material_edu;
+END //
+DELIMITER ;
+
+-- buscar visitas por correo electrónico
+DELIMITER //
+CREATE PROCEDURE procSearchUserVisitsByEmail(IN p_email VARCHAR(80))
+BEGIN
+    SELECT 
+        v.vis_id AS visit_id,
+        u.usu_correo AS email,
+        v.vis_fecha_ingreso AS visit_date,
+        v.tbl_material_edu_mat_id AS material_id,
+        m.mat_titulo AS material_name
+    FROM tbl_visitas v
+    JOIN tbl_usuarios u ON v.tbl_usuarios_usu_id = u.usu_id
+    JOIN tbl_material_edu m ON v.tbl_material_edu_mat_id = m.mat_id
+    WHERE u.usu_correo LIKE CONCAT('%', p_email, '%')
+    ORDER BY v.vis_fecha_ingreso DESC;
+END//
+DELIMITER ;
+
+-- filtro para buscar por rango de fecha
+DELIMITER //
+CREATE PROCEDURE procSearchVisitsByDateRange(
+    IN p_email VARCHAR(80),
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE
+)
+BEGIN
+    -- Validación de rango de fechas
+    IF (p_fecha_inicio IS NOT NULL AND p_fecha_fin IS NOT NULL AND p_fecha_inicio > p_fecha_fin) THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Error: La fecha de inicio no puede ser mayor a la fecha fin';
+    END IF;
+    SELECT 
+        v.vis_id AS visit_id,
+        u.usu_correo AS email,
+        v.vis_fecha_ingreso AS visit_date,
+        v.tbl_material_edu_mat_id AS material_id,
+        m.mat_titulo AS material_name,
+        v.vis_duracion AS duration
+    FROM tbl_visitas v
+    JOIN tbl_usuarios u ON v.tbl_usuarios_usu_id = u.usu_id
+    JOIN tbl_material_edu m ON v.tbl_material_edu_mat_id = m.mat_id
+    WHERE (p_email IS NULL OR u.usu_correo LIKE CONCAT('%', p_email, '%'))
+      AND (p_fecha_inicio IS NULL OR v.vis_fecha_ingreso >= p_fecha_inicio)
+      AND (p_fecha_fin IS NULL OR v.vis_fecha_ingreso <= p_fecha_fin)
+    ORDER BY v.vis_fecha_ingreso DESC;
+END//
+DELIMITER ;
+
+--  Actualizar la duración de la visita, para ver el tiempo de visita.
 DELIMITER //
 CREATE PROCEDURE procActualizarDuracionVisita(
     IN v_visita_id INT,
@@ -179,7 +242,6 @@ BEGIN
     WHERE vis_id = v_visita_id;
 END //
 DELIMITER ;
-
 
 DELIMITER //
 CREATE PROCEDURE procObtenerUltimaVisitaId(
