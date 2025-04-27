@@ -167,21 +167,6 @@ BEGIN
 END //
 DELIMITER ;
 
---  Actualizar la duración de la visita, para ver el tiempo de visita.
-
-DELIMITER ;
-
---  Crear el procedimiento almacenado para listar materiales educativos
-DELIMITER //
-CREATE PROCEDURE procListarMaterialesEducativos()
-BEGIN
-    SELECT 
-        mat_id AS id,
-        mat_titulo AS titulo
-    FROM tbl_material_edu;
-END //
-DELIMITER ;
-
 -- buscar visitas por correo electrónico
 DELIMITER //
 CREATE PROCEDURE procSearchUserVisitsByEmail(IN p_email VARCHAR(80))

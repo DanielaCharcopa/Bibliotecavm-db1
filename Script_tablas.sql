@@ -1,5 +1,3 @@
--- MySQL Workbench Forward Engineering
-
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
@@ -68,6 +66,9 @@ CREATE TABLE IF NOT EXISTS `bibliotecavm-db`.`tbl_usuarios` (
   `usu_salt` TEXT NOT NULL,
   `usu_rol` ENUM('Administrador', 'Docente', 'Estudiante') NOT NULL,
   `usu_nivel_estudios` ENUM('Primaria', 'Secundaria', 'Bachillerato', 'Técnico', 'Tecnólogo', 'Pregrado', 'Especialización', 'Maestría', 'Doctorado', 'Postdoctorado') NOT NULL,
+  `usu_estado` ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
+  `usu_fecha_creacion` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usu_fecha_ultima_modificacion` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`usu_id`),
   UNIQUE INDEX `usu_correo_UNIQUE` (`usu_correo` ASC) )
 ENGINE = InnoDB
