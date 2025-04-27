@@ -47,7 +47,7 @@ BEGIN
     FROM tbl_respuestas r
     INNER JOIN tbl_encuesta e ON r.tbl_encuesta_en_id = e.en_id 
     INNER JOIN tbl_usuarios u ON r.tbl_usuarios_usu_id = u.usu_id
-    ORDER BY e.en_descripcion_pregunta, r.res_id ASC;
+    ORDER BY  r.res_id DESC;
 END//
 DELIMITER ;
 
@@ -116,7 +116,7 @@ BEGIN
     INNER JOIN tbl_encuesta e ON r.tbl_encuesta_en_id = e.en_id
     INNER JOIN tbl_usuarios u ON r.tbl_usuarios_usu_id = u.usu_id
     WHERE r.tbl_usuarios_usu_id = p_user_id
-    ORDER BY e.en_descripcion_pregunta, r.res_id ASC;
+    ORDER BY  r.res_id DESC;
 END//
 DELIMITER ;
 
@@ -137,7 +137,6 @@ BEGIN
         WHERE r.tbl_usuarios_usu_id = v_usu_id
     )
     ORDER BY e.en_descripcion_pregunta ASC;
-
 END//
 DELIMITER ;
 
@@ -158,4 +157,49 @@ BEGIN
         SELECT NULL AS en_id, 'No hay preguntas en el sistema' AS en_descripcion_pregunta;
     END IF;
 END//
+DELIMITER ;
+
+
+-- conteo de respuestas "Sí" y "No" para una pregunta específica
+DELIMITER //
+CREATE PROCEDURE procCountAnswersByQuestion(
+    IN p_en_id INT
+)
+BEGIN
+    -- Verificar si la pregunta existe
+    IF NOT EXISTS (SELECT 1 FROM tbl_encuesta WHERE en_id = p_en_id) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'La pregunta especificada no existe.';
+    ELSE
+        -- Mostrar el conteo de respuestas
+        SELECT 
+            e.en_id AS 'ID Pregunta',
+            e.en_descripcion_pregunta AS 'Pregunta',
+            SUM(CASE WHEN r.res_respuesta = 'Sí' THEN 1 ELSE 0 END) AS 'Total Sí',
+            SUM(CASE WHEN r.res_respuesta = 'No' THEN 1 ELSE 0 END) AS 'Total No',
+            COUNT(r.res_id) AS 'Total Respuestas',
+            CASE WHEN COUNT(r.res_id) > 0 
+                 THEN ROUND(SUM(CASE WHEN r.res_respuesta = 'Sí' THEN 1 ELSE 0 END) * 100.0 / COUNT(r.res_id), 2)
+                 ELSE 0 END AS 'Porcentaje Sí',
+            CASE WHEN COUNT(r.res_id) > 0 
+                 THEN ROUND(SUM(CASE WHEN r.res_respuesta = 'No' THEN 1 ELSE 0 END) * 100.0 / COUNT(r.res_id), 2)
+                 ELSE 0 END AS 'Porcentaje No'
+        FROM tbl_encuesta e
+        LEFT JOIN tbl_respuestas r ON e.en_id = r.tbl_encuesta_en_id
+        WHERE e.en_id = p_en_id
+        GROUP BY e.en_id, e.en_descripcion_pregunta;
+    END IF;
+END //
+DELIMITER ;
+
+-- Procedimiento específico para listar encuestas 
+DELIMITER //
+CREATE PROCEDURE procGetAllSurveyQuestions()
+BEGIN
+    SELECT 
+        en_id AS question_id,
+        en_descripcion_pregunta AS question_text
+    FROM tbl_encuesta
+    ORDER BY en_id DESC;
+END //
 DELIMITER ;

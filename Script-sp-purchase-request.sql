@@ -1,5 +1,4 @@
 -- Insertar una nueva solicitud de compra
-
 DELIMITER //
 CREATE PROCEDURE procInsertPurchase_request(
     IN v_solic_ticket VARCHAR(45),
@@ -58,7 +57,9 @@ BEGIN
     INNER JOIN 
         tbl_usuarios u ON sc.tbl_usuarios_usu_id = u.usu_id
     INNER JOIN 
-        tbl_material_edu m ON sc.tbl_material_edu_mat_id = m.mat_id;
+        tbl_material_edu m ON sc.tbl_material_edu_mat_id = m.mat_id
+   ORDER BY 
+        sc.solic_fecha DESC, sc.solic_id DESC;
 END //
 DELIMITER ;
 
@@ -103,7 +104,7 @@ BEGIN
         tbl_usuarios_usu_id = v_tbl_usuarios_usu_id,
         solic_cantidad = v_solic_cantidad,
         tbl_material_edu_mat_id = v_tbl_material_edu_mat_id,
-        solic_valor_total = v_valor_total  -- Nueva columna
+        solic_valor_total = v_valor_total  
     WHERE solic_id = v_solic_id;
 END//
 DELIMITER ;
@@ -138,10 +139,12 @@ BEGIN
         sc.solic_id,
         sc.solic_ticket,
         sc.solic_fecha,
-        sc.solic_cantidad,
         CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS usuario_nombre,
         m.mat_titulo AS material_titulo,
-        sc.solic_valor_total  -- Nueva columna
+		sc.tbl_material_edu_mat_id, 
+        sc.solic_cantidad,
+        m.mat_precio AS precio_unitario,
+        sc.solic_valor_total  
     FROM 
         tbl_solicitud_compra sc
     INNER JOIN 
@@ -149,7 +152,10 @@ BEGIN
     INNER JOIN 
         tbl_material_edu m ON sc.tbl_material_edu_mat_id = m.mat_id
     WHERE 
-        sc.tbl_usuarios_usu_id = v_user_id;
+        sc.tbl_usuarios_usu_id = v_user_id
+        ORDER BY 
+        sc.solic_fecha DESC, 
+        sc.solic_id DESC;
 END//
 DELIMITER ;
 
@@ -163,4 +169,42 @@ END //
 DELIMITER ;
 
 
+-- Alternar estado de completado
+DELIMITER //
+CREATE PROCEDURE proc_toggle_completada(
+    IN p_solic_id INT
+)
+BEGIN
+    DECLARE v_ticket VARCHAR(45);
+    
+    -- Obtener el ticket actual
+    SELECT solic_ticket INTO v_ticket
+    FROM tbl_solicitud_compra
+    WHERE solic_id = p_solic_id;
+    
+    -- Alternar estado
+    IF v_ticket LIKE '✓%' THEN
+        -- Quitar checkmark si existe
+        UPDATE tbl_solicitud_compra
+        SET solic_ticket = SUBSTRING(v_ticket, 2)
+        WHERE solic_id = p_solic_id;
+    ELSE
+        -- Agregar checkmark si no existe
+        UPDATE tbl_solicitud_compra
+        SET solic_ticket = CONCAT('✓', v_ticket)
+        WHERE solic_id = p_solic_id;
+    END IF;
+    
+    SELECT ROW_COUNT() AS resultado;
+END //
+DELIMITER ;
 
+
+DELIMITER //
+CREATE PROCEDURE procGetMaterialById(IN p_mat_id INT)
+BEGIN
+    SELECT mat_id, mat_titulo, mat_precio, mat_formato
+    FROM tbl_material_edu
+    WHERE mat_id = p_mat_id;
+END //
+DELIMITER ;

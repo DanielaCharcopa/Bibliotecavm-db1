@@ -15,8 +15,7 @@ BEGIN
 Select au_id, au_nombre, au_apellido, au_municipio
 FROM tbl_autores; 
 END //
-
-
+DELIMITER ;
 
 -- Actualizar
 DELIMITER // 
@@ -29,7 +28,7 @@ SET  au_nombre = v_au_nombre, au_apellido = v_au_apellido, au_municipio = v_au_m
  END //
 DELIMITER ;
 
-
+-- Eliminar
 DELIMITER // 
 CREATE PROCEDURE procDeleteAuthors( IN v_au_id INT) 
 BEGIN  DELETE FROM tbl_autores

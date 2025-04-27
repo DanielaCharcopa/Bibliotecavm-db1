@@ -69,9 +69,7 @@ CREATE PROCEDURE proUpdateMaterialEducativo (
     IN keywords TEXT,
     IN formato ENUM('PDF', 'Epub', 'Video', 'Audio', 'Otro'), 
     IN editorial_id INT,
-    IN categoria_id INT  
     IN categoria_id INT 
-
 )
 BEGIN
     UPDATE tbl_material_edu 
