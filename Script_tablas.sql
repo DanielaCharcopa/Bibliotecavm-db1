@@ -1,3 +1,5 @@
+-- MySQL Workbench Forward Engineering
+
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
@@ -123,6 +125,7 @@ DEFAULT CHARACTER SET = utf8mb3;
 CREATE TABLE IF NOT EXISTS `bibliotecavm-db`.`tbl_material_edu_has_tbl_autores` (
   `tbl_material_edu_mat_id` INT NOT NULL,
   `tbl_autores_au_id` INT NOT NULL,
+  `Descripcion` TEXT CHARACTER SET 'armscii8' COLLATE 'armscii8_general_ci' NOT NULL,
   PRIMARY KEY (`tbl_material_edu_mat_id`, `tbl_autores_au_id`),
   INDEX `fk_tbl_material_edu_has_tbl_autores_tbl_autores1_idx` (`tbl_autores_au_id` ASC) ,
   INDEX `fk_tbl_material_edu_has_tbl_autores_tbl_material_edu_idx` (`tbl_material_edu_mat_id` ASC) ,
@@ -141,20 +144,20 @@ DEFAULT CHARACTER SET = utf8mb3;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `bibliotecavm-db`.`tbl_respuestas` (
   `res_id` INT NOT NULL AUTO_INCREMENT,
-  `res_respuesta` ENUM('Sí', 'No') NOT NULL,  
+  `res_respuesta` ENUM('Sí', 'No') NOT NULL,
   `tbl_usuarios_usu_id` INT NOT NULL,
   `tbl_encuesta_en_id` INT NOT NULL,
   PRIMARY KEY (`res_id`),
-  UNIQUE INDEX `unique_respuesta_usuario_encuesta` (`tbl_usuarios_usu_id` ASC, `tbl_encuesta_en_id` ASC),
-  INDEX `fk_tbl_respuestas_tbl_usuarios1_idx` (`tbl_usuarios_usu_id` ASC),
-  INDEX `fk_tbl_respuestas_tbl_encuesta1_idx` (`tbl_encuesta_en_id` ASC),
+  UNIQUE INDEX `unique_respuesta_usuario_encuesta` (`tbl_usuarios_usu_id` ASC, `tbl_encuesta_en_id` ASC) ,
+  INDEX `fk_tbl_respuestas_tbl_usuarios1_idx` (`tbl_usuarios_usu_id` ASC) ,
+  INDEX `fk_tbl_respuestas_tbl_encuesta1_idx` (`tbl_encuesta_en_id` ASC) ,
   CONSTRAINT `fk_tbl_respuestas_tbl_encuesta1`
     FOREIGN KEY (`tbl_encuesta_en_id`)
     REFERENCES `bibliotecavm-db`.`tbl_encuesta` (`en_id`),
   CONSTRAINT `fk_tbl_respuestas_tbl_usuarios1`
     FOREIGN KEY (`tbl_usuarios_usu_id`)
-    REFERENCES `bibliotecavm-db`.`tbl_usuarios` (`usu_id`)
-) ENGINE = InnoDB
+    REFERENCES `bibliotecavm-db`.`tbl_usuarios` (`usu_id`))
+ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
 
 
@@ -172,7 +175,6 @@ CREATE TABLE IF NOT EXISTS `bibliotecavm-db`.`tbl_solicitud_compra` (
   PRIMARY KEY (`solic_id`),
   INDEX `fk_tbl_solicitud_compra_tbl_usuarios1_idx` (`tbl_usuarios_usu_id` ASC) ,
   INDEX `fk_tbl_solicitud_compra_tbl_material_edu1_idx` (`tbl_material_edu_mat_id` ASC) ,
-  CONSTRAINT `fk_tbl_solicitud_compra_tbl_material_edu1`
     FOREIGN KEY (`tbl_material_edu_mat_id`)
     REFERENCES `bibliotecavm-db`.`tbl_material_edu` (`mat_id`),
   CONSTRAINT `fk_tbl_solicitud_compra_tbl_usuarios1`
