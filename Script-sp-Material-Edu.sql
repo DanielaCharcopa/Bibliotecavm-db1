@@ -36,6 +36,7 @@ BEGIN
 END //
 DELIMITER ;
 
+
 /*MOSTRAR*/
 DELIMITER //
 CREATE PROCEDURE proSelectMaterialEducativo()
@@ -56,6 +57,15 @@ BEGIN
     INNER JOIN tbl_editorial e ON m.tbl_editorial_edi_id = e.edi_id
     INNER JOIN tbl_categorias c ON m.tbl_categorias_cat_id = c.cat_id;
 END //
+DELIMITER ;
+
+-- Mostrar DDL- Material Educativo
+DELIMITER //
+CREATE PROCEDURE procSelectMaterialEduDDL()
+BEGIN
+    SELECT mat_id, mat_titulo
+    FROM tbl_material_edu;
+END//
 DELIMITER ;
 
 /*ACTUALIZAR*/
