@@ -173,8 +173,10 @@ CREATE PROCEDURE procSearchUserVisitsByEmail(IN p_email VARCHAR(80))
 BEGIN
     SELECT 
         v.vis_id AS visit_id,
+        CONCAT(u.usu_nombre, ' ', u.usu_apellido) AS usuario_nombre,
         u.usu_correo AS email,
         v.vis_fecha_ingreso AS visit_date,
+        v.vis_duracion AS visit_duration,  
         v.tbl_material_edu_mat_id AS material_id,
         m.mat_titulo AS material_name
     FROM tbl_visitas v
