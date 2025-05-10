@@ -66,15 +66,16 @@ CREATE TABLE IF NOT EXISTS `bibliotecavm-db`.`tbl_usuarios` (
   `usu_correo` VARCHAR(80) NOT NULL,
   `usu_contrasena` TEXT NOT NULL,
   `usu_salt` TEXT NOT NULL,
-  `usu_rol` ENUM('Administrador', 'Docente', 'Estudiante') NOT NULL,
-  `usu_nivel_estudios` ENUM('Primaria', 'Secundaria', 'Bachillerato', 'Técnico', 'Tecnólogo', 'Pregrado', 'Especialización', 'Maestría', 'Doctorado', 'Postdoctorado') NOT NULL,
+  `usu_rol` ENUM('Administrador', 'Docente', 'Estudiante') NULL,
   `usu_estado` ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
   `usu_fecha_creacion` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `usu_fecha_ultima_modificacion` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`usu_id`),
-  UNIQUE INDEX `usu_correo_UNIQUE` (`usu_correo` ASC) )
+  UNIQUE INDEX `usu_correo_UNIQUE` (`usu_correo` ASC)
+)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
+
 
 
 -- -----------------------------------------------------
