@@ -124,12 +124,13 @@ DEFAULT CHARACTER SET = utf8mb3;
 -- Table `bibliotecavm-db`.`tbl_material_edu_has_tbl_autores`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `bibliotecavm-db`.`tbl_material_edu_has_tbl_autores` (
+  `id_material_autores` INT NOT NULL AUTO_INCREMENT,
   `tbl_material_edu_mat_id` INT NOT NULL,
   `tbl_autores_au_id` INT NOT NULL,
-  `Descripcion` TEXT CHARACTER SET 'armscii8' COLLATE 'armscii8_general_ci' NOT NULL,
-  PRIMARY KEY (`tbl_material_edu_mat_id`, `tbl_autores_au_id`),
+  `descrtbl_material_edu_has_tbl_autoresipcion` TEXT CHARACTER SET 'armscii8' NOT NULL,
   INDEX `fk_tbl_material_edu_has_tbl_autores_tbl_autores1_idx` (`tbl_autores_au_id` ASC) ,
   INDEX `fk_tbl_material_edu_has_tbl_autores_tbl_material_edu_idx` (`tbl_material_edu_mat_id` ASC) ,
+  PRIMARY KEY (`id_material_autores`, `tbl_material_edu_mat_id`, `tbl_autores_au_id`),
   CONSTRAINT `fk_tbl_material_edu_has_tbl_autores_tbl_autores1`
     FOREIGN KEY (`tbl_autores_au_id`)
     REFERENCES `bibliotecavm-db`.`tbl_autores` (`au_id`),
