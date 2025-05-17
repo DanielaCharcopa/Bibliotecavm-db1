@@ -10,48 +10,28 @@ CREATE PROCEDURE procInsertUsers(
 )
 BEGIN
     DECLARE user_count INT;
-    DECLARE final_rol ENUM('Administrador', 'Docente', 'Estudiante');
     
-    -- Verificar si el correo ya existe  
-    IF EXISTS (SELECT 1 FROM tbl_usuarios WHERE usu_correo = v_correo) THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'El correo electrónico ya está registrado.';
-    END IF;
-    
-    -- Contar usuarios existentes solo una vez
+    -- Solo determinamos si es el primer usuario para asignar rol Administrador
     SELECT COUNT(*) INTO user_count FROM tbl_usuarios;
     
-    -- Determinar el rol final
-    IF user_count = 0 THEN
-        SET final_rol = 'Administrador'; -- Primer usuario siempre es Administrador
-    ELSE
-        SET final_rol = v_rol; -- Para los demás, usar el rol especificado
-    END IF;
-    
-    -- Insertar nuevo usuario
+    -- Inserción directa aprovechando los DEFAULT de la tabla
     INSERT INTO tbl_usuarios(
         usu_nombre, 
         usu_apellido, 
         usu_correo, 
         usu_contrasena, 
         usu_salt, 
-        usu_rol,
-        usu_estado,
-        usu_fecha_creacion,
-        usu_fecha_ultima_modificacion
-    ) 
-    VALUES (
+        usu_rol
+    ) VALUES (
         v_nombre, 
         v_apellido, 
         v_correo, 
         v_contrasena, 
         v_salt, 
-        final_rol,
-        'Activo',
-        CURRENT_TIMESTAMP,
-        CURRENT_TIMESTAMP
+        IF(user_count = 0, 'Administrador', v_rol)
     );
     
+    -- Retornamos solo el ID del nuevo usuario
     SELECT LAST_INSERT_ID() AS nuevo_usuario_id;
 END//
 DELIMITER ;
