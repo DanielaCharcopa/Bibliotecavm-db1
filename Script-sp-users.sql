@@ -6,33 +6,40 @@ CREATE PROCEDURE procInsertUsers(
     IN v_correo VARCHAR(80),
     IN v_contrasena TEXT, 
     IN v_salt TEXT,
-    IN v_rol ENUM('Administrador', 'Docente', 'Estudiante')
+    IN v_rol ENUM('Administrador', 'Docente', 'Estudiante'),
+    IN v_nivel_estudios ENUM('Primaria', 'Secundaria', 'Bachillerato', 'Técnico', 'Tecnólogo', 'Pregrado', 'Especialización', 'Maestría', 'Doctorado', 'Postdoctorado')
 )
 BEGIN
-    DECLARE user_count INT;
-    
-    -- Solo determinamos si es el primer usuario para asignar rol Administrador
-    SELECT COUNT(*) INTO user_count FROM tbl_usuarios;
-    
-    -- Inserción directa aprovechando los DEFAULT de la tabla
-    INSERT INTO tbl_usuarios(
-        usu_nombre, 
-        usu_apellido, 
-        usu_correo, 
-        usu_contrasena, 
-        usu_salt, 
-        usu_rol
-    ) VALUES (
-        v_nombre, 
-        v_apellido, 
-        v_correo, 
-        v_contrasena, 
-        v_salt, 
-        IF(user_count = 0, 'Administrador', v_rol)
-    );
-    
-    -- Retornamos solo el ID del nuevo usuario
-    SELECT LAST_INSERT_ID() AS nuevo_usuario_id;
+    DECLARE email_count INT;
+    SELECT COUNT(*) INTO email_count 
+    FROM tbl_usuarios 
+    WHERE usu_correo = v_correo;
+
+    IF email_count = 0 THEN
+        INSERT INTO tbl_usuarios(
+            usu_nombre, 
+            usu_apellido, 
+            usu_correo, 
+            usu_contrasena, 
+            usu_salt, 
+            usu_rol, 
+            usu_nivel_estudios,
+            usu_estado  -- Se añade el campo estado con valor por defecto 'Activo'
+        ) 
+        VALUES (
+            v_nombre, 
+            v_apellido, 
+            v_correo, 
+            v_contrasena, 
+            v_salt, 
+            v_rol, 
+            v_nivel_estudios,
+            'Activo'  -- Valor explícito para mayor claridad
+        );
+    ELSE
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'El correo electrónico ya está registrado.';
+    END IF;
 END//
 DELIMITER ;
 
@@ -45,10 +52,11 @@ BEGIN
         usu_nombre, 
         usu_apellido, 
         usu_correo, 
-        usu_rol,
-        usu_estado,
-        usu_fecha_creacion,
-        usu_fecha_ultima_modificacion
+        usu_rol, 
+        usu_nivel_estudios,
+        usu_estado,  -- Nuevo campo
+        usu_fecha_creacion,  -- Nuevo campo
+        usu_fecha_ultima_modificacion  -- Nuevo campo
     FROM tbl_usuarios;
 END//
 DELIMITER ;
@@ -74,29 +82,44 @@ CREATE PROCEDURE procUpdateUsers(
     IN v_contrasena TEXT, 
     IN v_salt TEXT,
     IN v_rol ENUM('Administrador', 'Docente', 'Estudiante'),
-    IN v_estado ENUM('Activo', 'Inactivo')
+    IN v_nivel_estudios ENUM('Primaria', 'Secundaria', 'Bachillerato', 'Técnico', 'Tecnólogo', 'Pregrado', 'Especialización', 'Maestría', 'Doctorado', 'Postdoctorado'),
+    IN v_estado ENUM('Activo', 'Inactivo')  -- Nuevo parámetro para el estado
 )
 BEGIN
-    -- Verificar si el correo ya existe en otro usuario
-    IF EXISTS (SELECT 1 FROM tbl_usuarios WHERE usu_correo = v_correo AND usu_id != v_id) THEN
+    -- Verificar si el nuevo correo ya existe en otro usuario distinto al actual
+    DECLARE email_count INT;
+    SELECT COUNT(*) INTO email_count 
+    FROM tbl_usuarios 
+    WHERE usu_correo = v_correo AND usu_id != v_id;
+
+    -- Si el correo no está en uso por otro usuario, se actualizan los datos
+    IF email_count = 0 THEN
+        UPDATE tbl_usuarios 
+        SET 
+            usu_nombre = v_nombre,
+            usu_apellido = v_apellido,
+            usu_correo = v_correo,
+            usu_contrasena = CASE 
+                              WHEN v_contrasena IS NOT NULL AND v_contrasena != '' THEN v_contrasena
+                              ELSE usu_contrasena  -- Mantiene el valor actual si no se proporciona nueva contraseña
+                            END,
+            usu_salt = CASE 
+                        WHEN v_salt IS NOT NULL AND v_salt != '' THEN v_salt
+                        ELSE usu_salt  -- Mantiene el valor actual si no se proporciona nuevo salt
+                      END,
+            usu_rol = v_rol,
+            usu_nivel_estudios = v_nivel_estudios,
+            usu_estado = v_estado,  -- Actualiza el estado
+            usu_fecha_ultima_modificacion = CURRENT_TIMESTAMP  -- Actualiza automáticamente la fecha
+        WHERE usu_id = v_id;
+        
+        -- Retorna el número de filas afectadas
+        SELECT ROW_COUNT() AS filas_afectadas;
+    ELSE
+        -- Si el correo ya está en uso, se lanza un error
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'El correo electrónico ya está registrado en otro usuario.';
     END IF;
-    
-    -- Actualizar usuario
-    UPDATE tbl_usuarios 
-    SET 
-        usu_nombre = v_nombre,
-        usu_apellido = v_apellido,
-        usu_correo = v_correo,
-        usu_contrasena = COALESCE(NULLIF(v_contrasena, ''), usu_contrasena),
-        usu_salt = COALESCE(NULLIF(v_salt, ''), usu_salt),
-        usu_rol = v_rol,
-        usu_estado = v_estado,
-        usu_fecha_ultima_modificacion = CURRENT_TIMESTAMP
-    WHERE usu_id = v_id;
-    
-    SELECT ROW_COUNT() AS filas_afectadas;
 END//
 DELIMITER ;
 
@@ -109,7 +132,7 @@ BEGIN
 END//
 DELIMITER ;
 
--- 6. Procedimiento para Validar el Inicio de Sesión
+-- 6. Procedimiento para Validar el Inicio de Sesión comprobando correo y contraseña
 DELIMITER //
 CREATE PROCEDURE procValidateUserLogin(
     IN v_correo VARCHAR(80)
@@ -122,16 +145,18 @@ BEGIN
         usu_contrasena,
         usu_salt,
         usu_rol,
-        usu_estado
+        usu_estado  -- Importante para verificar si puede iniciar sesión
     FROM tbl_usuarios 
     WHERE usu_correo = v_correo;
 END//
 DELIMITER ;
 
+
 -- 7. Procedimiento para Seleccionar un Usuario por su Correo
 DELIMITER //
 CREATE PROCEDURE procSelectUsersMail(IN p_mail VARCHAR(80))
 BEGIN
+    -- Seleccionar los datos del usuario por su correo
     SELECT 
         usu_correo, 
         usu_contrasena, 
@@ -161,7 +186,7 @@ BEGIN
 END//
 DELIMITER ;
 
--- 10. Buscar usuarios por correo
+-- 10 Buscar por correo a los usuarios: 
 DELIMITER //
 CREATE PROCEDURE procSearchUsersByEmail(
     IN p_correo VARCHAR(80)
@@ -172,15 +197,17 @@ BEGIN
         usu_nombre, 
         usu_apellido, 
         usu_correo, 
-        usu_rol,
-        usu_estado
+        usu_rol, 
+        usu_nivel_estudios,
+        usu_estado  -- Asegurando incluir el estado
     FROM tbl_usuarios
     WHERE usu_correo LIKE CONCAT('%', p_correo, '%')
-    ORDER BY usu_nombre, usu_apellido;
+    ORDER BY usu_nombre, usu_apellido;  -- Ordenar resultados
 END//
 DELIMITER ;
 
--- 11. Procedimiento para activar usuarios
+-- procedimiento para activar usuarios.
+
 DELIMITER //
 CREATE PROCEDURE procActiveUser(IN p_usu_id INT)
 BEGIN
@@ -188,7 +215,8 @@ BEGIN
 END //
 DELIMITER ;
 
--- 12. Procedimiento para desactivar usuarios
+-- procedimiento para desactivar usuarios.
+
 DELIMITER //
 CREATE PROCEDURE procDeactivateUser(IN p_usu_id INT)
 BEGIN
@@ -196,7 +224,8 @@ BEGIN
 END //
 DELIMITER ;
 
--- 13. Procedimiento para obtener solo usuarios activos
+
+--  procedimiento para obtener solo usuarios activos
 DELIMITER //
 CREATE PROCEDURE procSelectActiveUsers()
 BEGIN
@@ -205,13 +234,15 @@ BEGIN
         usu_nombre, 
         usu_apellido, 
         usu_correo, 
-        usu_rol
+        usu_rol, 
+        usu_nivel_estudios
     FROM tbl_usuarios
     WHERE usu_estado = 'Activo';
 END//
 DELIMITER ;
 
--- 14. Procedimiento para búsqueda con filtro de estado
+--  procedimiento para búsqueda con filtro de estado
+
 DELIMITER //
 CREATE PROCEDURE procSearchUsersByStatus(
     IN p_correo VARCHAR(80),
@@ -224,7 +255,8 @@ BEGIN
             usu_nombre, 
             usu_apellido, 
             usu_correo, 
-            usu_rol,
+            usu_rol, 
+            usu_nivel_estudios,
             usu_estado
         FROM tbl_usuarios
         WHERE usu_correo LIKE CONCAT('%', p_correo, '%');
@@ -234,7 +266,8 @@ BEGIN
             usu_nombre, 
             usu_apellido, 
             usu_correo, 
-            usu_rol,
+            usu_rol, 
+            usu_nivel_estudios,
             usu_estado
         FROM tbl_usuarios
         WHERE usu_correo LIKE CONCAT('%', p_correo, '%')
@@ -242,3 +275,4 @@ BEGIN
     END IF;
 END//
 DELIMITER ;
+
