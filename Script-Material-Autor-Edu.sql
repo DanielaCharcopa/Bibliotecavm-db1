@@ -12,16 +12,16 @@ DELIMITER //
 
 CREATE PROCEDURE procSelectMaterial_Autores()
 BEGIN
-    SELECT 
-        ma.id_material_autores, 
-        ma.tbl_material_edu_mat_id, 
-        ma.tbl_autores_au_id, 
-        t.mat_titulo AS material_titulo,
-        a.au_nombre AS nombre_autor, 
-        ma.descripcion
-    FROM tbl_material_edu_has_tbl_autores ma
-    INNER JOIN tbl_material_edu t ON ma.tbl_material_edu_mat_id = t.mat_id
-    INNER JOIN tbl_autores a ON ma.tbl_autores_au_id = a.au_id;
+      SELECT 
+    t.mat_titulo AS tbl_material_edu_mat_id,
+    GROUP_CONCAT(ma.id_material_autores SEPARATOR ', ') AS id_material_autores,
+    GROUP_CONCAT(CONCAT(a.au_nombre, ' ', a.au_apellido) SEPARATOR ', ') AS tbl_autores_au_id,
+    ma.descripcion  AS descripcion
+FROM tbl_material_edu_has_tbl_autores ma
+INNER JOIN tbl_material_edu t ON ma.tbl_material_edu_mat_id = t.mat_id
+INNER JOIN tbl_autores a ON ma.tbl_autores_au_id = a.au_id
+GROUP BY t.mat_titulo;
+
 END //
 
 DELIMITER ;
