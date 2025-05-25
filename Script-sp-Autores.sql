@@ -17,6 +17,23 @@ FROM tbl_autores;
 END //
 DELIMITER ;
 
+-- Mostrar DDL  - Autor
+DELIMITER //
+CREATE PROCEDURE procSelectAutorDDL()
+BEGIN
+  SELECT 
+    au_id, 
+    CONCAT(au_nombre, ' ', au_apellido) AS nombre_completo
+FROM tbl_autores;
+
+END//
+DELIMITER ;
+
+
+
+
+
+
 -- Actualizar
 DELIMITER // 
 CREATE PROCEDURE procUpdateAuthor( 
@@ -28,10 +45,24 @@ SET  au_nombre = v_au_nombre, au_apellido = v_au_apellido, au_municipio = v_au_m
  END //
 DELIMITER ;
 
--- Eliminar
+
 DELIMITER // 
 CREATE PROCEDURE procDeleteAuthors( IN v_au_id INT) 
 BEGIN  DELETE FROM tbl_autores
  WHERE au_id = v_au_id;
  END //
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
