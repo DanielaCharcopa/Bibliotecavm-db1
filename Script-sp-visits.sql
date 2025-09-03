@@ -19,6 +19,7 @@ BEGIN
         v_usu_id,
         v_mat_id
     ); 
+     SELECT LAST_INSERT_ID() AS vis_id;
 END //
 DELIMITER ;
 
@@ -137,7 +138,7 @@ BEGIN
     INNER JOIN tbl_visitas v ON m.mat_id = v.tbl_material_edu_mat_id
     GROUP BY m.mat_id, m.mat_titulo
     ORDER BY total_visitas DESC
-    LIMIT 5; -- Opcional, para mostrar los 5 más visitados
+    LIMIT 5; -- para mostrar los 5 más visitados
 END //
 DELIMITER ;
 
@@ -187,6 +188,7 @@ BEGIN
 END//
 DELIMITER ;
 
+
 -- filtro para buscar por rango de fecha
 DELIMITER //
 CREATE PROCEDURE procSearchVisitsByDateRange(
@@ -221,12 +223,11 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE procActualizarDuracionVisita(
     IN v_visita_id INT,
-    IN v_duracion VARCHAR(8) -- Cambiar de TIME a VARCHAR
+    IN v_duracion TIME
 )
 BEGIN
-    -- Conversión explícita a TIME
     UPDATE tbl_visitas 
-    SET vis_duracion = CAST(v_duracion AS TIME)
+    SET vis_duracion = v_duracion
     WHERE vis_id = v_visita_id;
 END //
 DELIMITER ;
